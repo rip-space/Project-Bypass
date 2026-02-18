@@ -25,10 +25,12 @@
       <header class="app-header">
         <div class="app-title">PROJECT BYPASS</div>
         <nav class="tab-bar">
-          <div class="tab tab-active">Games</div>
-          <div class="tab">Search</div>
-          <div class="tab">Movies</div>
-          <div class="tab">Tab 4</div>
+<nav class="tab-bar">
+  <div class="tab tab-active" data-page="page-home">Home</div>
+  <div class="tab" data-page="page-games">Games</div>
+  <div class="tab" data-page="page-search">Search</div>
+  <div class="tab" data-page="page-movies">Movies</div>
+  <div class="tab" data-page="page-apps">Apps</div>
           <div class="tab">Tab 5</div>
           <div class="tab">Tab 6</div>
           <div class="tab">Tab 7</div>
@@ -41,6 +43,42 @@
       <!-- MAIN -->
       <main class="app-main">
         <!-- GAMES / GN-MATH -->
+         <section class="page page-active" id="page-home">
+  <div class="page-panel">
+    <div class="page-header">
+      <div class="page-title">Home</div>
+      <div class="page-sub">Welcome back</div>
+    </div>
+
+    <div class="page-body home-body">
+
+      <!-- Fake Search Bar -->
+      <div class="home-search">
+        <input type="text" placeholder="Search (not functional)">
+      </div>
+
+      <!-- Circular Buttons -->
+      <div class="home-buttons">
+        <div class="circle-btn" data-page="page-games">Games</div>
+        <div class="circle-btn" data-page="page-movies">Movies</div>
+        <div class="circle-btn" data-page="page-apps">Apps</div>
+      </div>
+
+      <!-- CLIPPY -->
+      <div id="clippy-container">
+        <img id="clippy" src="https://i.imgur.com/6YV0ZQF.png">
+        <div id="clippy-bubble">Hello!</div>
+
+        <div id="clippy-eyes">
+          <div class="eye"><div class="pupil"></div></div>
+          <div class="eye"><div class="pupil"></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
         <section class="page page-active" id="page-games">
           <div class="page-panel">
             <div class="page-header">

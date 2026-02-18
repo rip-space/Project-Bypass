@@ -41,6 +41,118 @@
 }
 
 /* Theme wrappers (to be toggled later with JS) */
+/* HOME PAGE */
+.home-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+}
+
+/* Fake search bar */
+.home-search input {
+  width: 60%;
+  padding: 12px;
+  border-radius: 30px;
+  border: none;
+  outline: none;
+  background: rgba(255,255,255,0.08);
+  color: var(--pb-fg);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Circular buttons */
+.home-buttons {
+  display: flex;
+  gap: 40px;
+  margin-top: 40px;
+}
+
+.circle-btn {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  transition: 0.2s;
+}
+
+.circle-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+/* CLIPPY */
+#clippy-container {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: clippy-jitter 4s infinite;
+  pointer-events: none;
+}
+
+#clippy {
+  width: 130px;
+  filter: grayscale(100%);
+}
+
+/* Speech bubble */
+#clippy-bubble {
+  position: absolute;
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.9);
+  color: black;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Eyes overlay */
+#clippy-eyes {
+  position: absolute;
+  top: 38px;
+  left: 46px;
+  display: flex;
+  gap: 26px;
+}
+
+.eye {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  position: relative;
+}
+
+.pupil {
+  width: 9px;
+  height: 9px;
+  background: black;
+  border-radius: 50%;
+  position: absolute;
+  top: 6px;
+  left: 6px;
+}
+
+/* Jitter animation */
+@keyframes clippy-jitter {
+  0% { transform: translateX(-50%) translateY(0); }
+  25% { transform: translateX(-48%) translateY(-2px); }
+  50% { transform: translateX(-52%) translateY(1px); }
+  75% { transform: translateX(-49%) translateY(-1px); }
+  100% { transform: translateX(-50%) translateY(0); }
+}
 
 body.theme-dark {
   --pb-bg: var(--pb-bg-dark);
