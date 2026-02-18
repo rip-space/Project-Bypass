@@ -1,0 +1,916 @@
+/* =========================================================
+   PROJECT BYPASS — GRAYSCALE HACKER / CIRCUIT HYBRID
+   ========================================================= */
+
+/* ------------------------------
+   1. ROOT & THEMES
+   ------------------------------ */
+
+:root {
+  --pb-bg-dark: #050608;
+  --pb-bg-light: #f5f5f5;
+  --pb-bg-gray: #1b1d21;
+
+  --pb-fg-dark: #f5f5f5;
+  --pb-fg-light: #111111;
+  --pb-fg-gray: #e5e5e5;
+
+  --pb-line-soft: rgba(255, 255, 255, 0.08);
+  --pb-line-strong: rgba(255, 255, 255, 0.18);
+  --pb-line-dark: rgba(0, 0, 0, 0.18);
+
+  --pb-border-soft: rgba(255, 255, 255, 0.18);
+  --pb-border-strong: rgba(255, 255, 255, 0.35);
+
+  --pb-radius-lg: 24px;
+  --pb-radius-md: 14px;
+  --pb-radius-sm: 8px;
+  --pb-radius-pill: 999px;
+
+  --pb-speed-slow: 24s;
+  --pb-speed-med: 12s;
+  --pb-speed-fast: 5s;
+
+  --pb-ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --pb-ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --pb-font-main: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+  --pb-font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular,
+    Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Theme wrappers (to be toggled later with JS) */
+
+body.theme-dark {
+  --pb-bg: var(--pb-bg-dark);
+  --pb-fg: var(--pb-fg-dark);
+  --pb-line-main: var(--pb-line-soft);
+  --pb-line-alt: var(--pb-line-strong);
+}
+
+body.theme-light {
+  --pb-bg: var(--pb-bg-light);
+  --pb-fg: var(--pb-fg-light);
+  --pb-line-main: rgba(0, 0, 0, 0.06);
+  --pb-line-alt: rgba(0, 0, 0, 0.16);
+}
+
+body.theme-gray {
+  --pb-bg: var(--pb-bg-gray);
+  --pb-fg: var(--pb-fg-gray);
+  --pb-line-main: rgba(255, 255, 255, 0.06);
+  --pb-line-alt: rgba(255, 255, 255, 0.16);
+}
+
+/* Default theme if no class is set */
+body {
+  background-color: var(--pb-bg-dark);
+  color: var(--pb-fg-dark);
+}
+
+/* ------------------------------
+   2. GLOBAL RESET & BASE
+   ------------------------------ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: var(--pb-font-main);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Selection */
+::selection {
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--pb-fg-light);
+}
+
+/* Scrollbars (for inner scroll areas) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.4);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4),
+    rgba(255, 255, 255, 0.1)
+  );
+  border-radius: 999px;
+}
+
+/* ------------------------------
+   3. GEOMETRIC BACKGROUND ENGINE
+   ------------------------------ */
+
+.pb-bg-net {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: -2;
+  pointer-events: none;
+  background: radial-gradient(circle at top, #050608, #000000 70%);
+}
+
+/* Layer 1: circuit grid */
+.pb-bg-net::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      to right,
+      var(--pb-line-main) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      var(--pb-line-main) 1px,
+      transparent 1px
+    );
+  background-size: 80px 80px;
+  opacity: 0.6;
+  mix-blend-mode: screen;
+  animation: pb-grid-shift var(--pb-speed-slow) linear infinite;
+}
+
+/* Layer 2: moving diagonal mesh */
+.pb-bg-net::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(
+      135deg,
+      transparent 0,
+      transparent 40%,
+      var(--pb-line-alt) 40%,
+      var(--pb-line-alt) 42%,
+      transparent 42%,
+      transparent 100%
+    );
+  background-size: 220px 220px;
+  opacity: 0.7;
+  mix-blend-mode: screen;
+  animation: pb-mesh-drift var(--pb-speed-med) linear infinite;
+}
+
+/* Layer 3: nodes + lines forming command bar */
+
+.pb-bg-net-lines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.pb-bg-net-lines svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* We fake it with absolutely positioned pseudo-lines */
+
+.pb-line-track {
+  position: absolute;
+  width: 1px;
+  height: 60%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 40%,
+    var(--pb-line-alt) 40%,
+    var(--pb-line-alt) 100%
+  );
+  opacity: 0.7;
+  animation: pb-line-fall var(--pb-speed-med) var(--pb-ease-soft) infinite;
+}
+
+.pb-line-track::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pb-fg);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+}
+
+/* Place several tracks across the screen */
+.pb-line-track:nth-child(1) {
+  left: 8%;
+  animation-delay: -2s;
+}
+.pb-line-track:nth-child(2) {
+  left: 22%;
+  animation-delay: -4s;
+}
+.pb-line-track:nth-child(3) {
+  left: 37%;
+  animation-delay: -6s;
+}
+.pb-line-track:nth-child(4) {
+  left: 52%;
+  animation-delay: -1s;
+}
+.pb-line-track:nth-child(5) {
+  left: 68%;
+  animation-delay: -3s;
+}
+.pb-line-track:nth-child(6) {
+  left: 83%;
+  animation-delay: -5s;
+}
+
+/* As they fall, they "snap" into the command bar height */
+
+@keyframes pb-line-fall {
+  0% {
+    transform: translateY(-80%);
+    opacity: 0;
+  }
+  40% {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  60% {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(40%);
+    opacity: 0;
+  }
+}
+
+/* Grid + mesh motion */
+
+@keyframes pb-grid-shift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-40px, -40px, 0);
+  }
+}
+
+@keyframes pb-mesh-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(40px, -20px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ------------------------------
+   4. APP SHELL & TABS
+   ------------------------------ */
+
+.app-shell {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--pb-fg);
+}
+
+/* Top bar with tabs */
+
+.app-header {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.85),
+    rgba(0, 0, 0, 0.7)
+  );
+  backdrop-filter: blur(14px);
+  position: relative;
+  z-index: 2;
+}
+
+.app-title {
+  font-size: 0.9rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-right: 1.5rem;
+  opacity: 0.8;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 0.35rem;
+  flex: 1;
+  overflow-x: auto;
+}
+
+.tab {
+  position: relative;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--pb-radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: default;
+  color: var(--pb-fg);
+  background: rgba(0, 0, 0, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.tab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.4),
+      transparent,
+      rgba(255, 255, 255, 0.4)
+    )
+    border-box;
+  mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.2s var(--pb-ease-soft);
+}
+
+.tab-active {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.tab-active::before {
+  opacity: 1;
+}
+
+/* Main content area */
+
+.app-main {
+  flex: 1;
+  position: relative;
+  padding: 1rem 1.25rem 3.5rem;
+  display: flex;
+  overflow: hidden;
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+  padding: 0.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s var(--pb-ease-soft);
+  display: flex;
+  flex-direction: column;
+}
+
+.page-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Inner page panel */
+
+.page-panel {
+  flex: 1;
+  border-radius: var(--pb-radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: radial-gradient(
+    circle at top,
+    rgba(0, 0, 0, 0.9),
+    rgba(0, 0, 0, 0.96)
+  );
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.9),
+    0 0 40px rgba(0, 0, 0, 0.9);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Page header */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.page-title {
+  font-size: 0.9rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.page-sub {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* Content area */
+
+.page-body {
+  flex: 1;
+  border-radius: var(--pb-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: radial-gradient(
+    circle at top,
+    rgba(10, 10, 10, 0.9),
+    rgba(5, 5, 5, 0.98)
+  );
+  overflow: hidden;
+  position: relative;
+}
+
+/* Iframes */
+
+.page-body iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #000;
+}
+
+/* Coming soon placeholder */
+
+.coming-soon {
+  width: 100%;
+  height: 100%;
+  font-family: var(--pb-font-mono);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+/* ------------------------------
+   5. SETTINGS PAGE (TECH UI)
+   ------------------------------ */
+
+.settings-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  height: 100%;
+  overflow: auto;
+}
+
+.settings-section {
+  border-radius: var(--pb-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: radial-gradient(
+    circle at top left,
+    rgba(20, 20, 20, 0.95),
+    rgba(5, 5, 5, 0.98)
+  );
+  padding: 0.9rem 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* subtle corner brackets */
+
+.settings-section::before,
+.settings-section::after {
+  content: "";
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  opacity: 0.5;
+}
+
+.settings-section::before {
+  top: 6px;
+  left: 6px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.settings-section::after {
+  bottom: 6px;
+  right: 6px;
+  border-left: none;
+  border-top: none;
+}
+
+.settings-title {
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 0.5rem;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Dropdown container */
+
+.pb-select {
+  position: relative;
+  min-width: 220px;
+}
+
+.pb-select-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  opacity: 0.6;
+  margin-bottom: 0.25rem;
+}
+
+.pb-select-display {
+  position: relative;
+  border-radius: var(--pb-radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: default;
+  overflow: hidden;
+}
+
+/* animated border lines */
+
+.pb-select-display::before,
+.pb-select-display::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.5),
+      transparent,
+      rgba(255, 255, 255, 0.5)
+    )
+    border-box;
+  mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  animation: pb-border-shift var(--pb-speed-med) linear infinite;
+}
+
+.pb-select-display::after {
+  animation-direction: reverse;
+}
+
+@keyframes pb-border-shift {
+  0% {
+    opacity: 0.2;
+    transform: translateX(-10%);
+  }
+  50% {
+    opacity: 0.5;
+    transform: translateX(10%);
+  }
+  100% {
+    opacity: 0.2;
+    transform: translateX(-10%);
+  }
+}
+
+/* caret */
+
+.pb-select-caret {
+  width: 10px;
+  height: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+  transform: rotate(-45deg);
+  opacity: 0.7;
+}
+
+/* Dropdown list (visual only, always visible here) */
+
+.pb-select-list {
+  margin-top: 0.4rem;
+  border-radius: var(--pb-radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: radial-gradient(
+    circle at top,
+    rgba(10, 10, 10, 0.98),
+    rgba(0, 0, 0, 0.98)
+  );
+  overflow: hidden;
+  position: relative;
+  padding: 0.25rem 0;
+  animation: pb-select-expand 0.4s var(--pb-ease-soft) forwards;
+  transform-origin: top center;
+}
+
+@keyframes pb-select-expand {
+  0% {
+    transform: scaleY(0.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.pb-select-option {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: var(--pb-font-mono);
+  color: rgba(255, 255, 255, 0.7);
+  position: relative;
+}
+
+/* line + dot on hover */
+
+.pb-select-option::before {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateY(-50%) scaleX(0);
+  transform-origin: left;
+  transition: transform 0.18s var(--pb-ease-snappy);
+}
+
+.pb-select-option::after {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  transform: translate(-4px, -50%) scale(0);
+  transition: transform 0.18s var(--pb-ease-snappy);
+}
+
+.pb-select-option:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pb-select-option:hover::before {
+  transform: translateY(-50%) scaleX(1);
+}
+
+.pb-select-option:hover::after {
+  transform: translate(-4px, -50%) scale(1);
+}
+
+/* Shifting-line buttons */
+
+.pb-btn {
+  position: relative;
+  padding: 0.45rem 1.2rem;
+  border-radius: var(--pb-radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.8);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: default;
+  overflow: hidden;
+}
+
+.pb-btn::before,
+.pb-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.5),
+      transparent,
+      rgba(255, 255, 255, 0.5)
+    )
+    border-box;
+  mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.25;
+  animation: pb-btn-lines var(--pb-speed-fast) linear infinite;
+}
+
+.pb-btn::after {
+  animation-direction: reverse;
+}
+
+@keyframes pb-btn-lines {
+  0% {
+    transform: translateX(-20%);
+  }
+  50% {
+    transform: translateX(20%);
+  }
+  100% {
+    transform: translateX(-20%);
+  }
+}
+
+.pb-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ------------------------------
+   6. MINECRAFT-STYLE COMMAND BAR
+   ------------------------------ */
+
+.command-bar-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 64px;
+  pointer-events: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 3;
+}
+
+/* The bar is visually formed by the falling lines (pb-line-track)
+   converging at this height. We add the actual input shell here. */
+
+.command-bar {
+  width: min(720px, 100% - 2rem);
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  padding: 0 0.6rem;
+  font-family: var(--pb-font-mono);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 -8px 30px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(100%);
+  animation: pb-command-appear 2.2s var(--pb-ease-soft) 1.2s forwards;
+}
+
+/* left prompt */
+
+.command-bar-prefix {
+  margin-right: 0.4rem;
+  opacity: 0.7;
+}
+
+/* typing text */
+
+.command-bar-text {
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 1px solid rgba(255, 255, 255, 0.8);
+  animation:
+    pb-command-type 4s steps(24, end) 2.4s forwards,
+    pb-command-caret 0.8s steps(1, end) infinite;
+}
+
+/* text content via data attribute */
+
+.command-bar-text::before {
+  content: attr(data-command);
+}
+
+/* animations */
+
+@keyframes pb-command-appear {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pb-command-type {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes pb-command-caret {
+  0% {
+    border-right-color: rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    border-right-color: transparent;
+  }
+  100% {
+    border-right-color: rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* ------------------------------
+   7. RESPONSIVE
+   ------------------------------ */
+
+@media (max-width: 768px) {
+  .app-header {
+    padding-inline: 0.75rem;
+  }
+  .app-main {
+    padding-inline: 0.75rem;
+  }
+  .page-panel {
+    padding-inline: 0.75rem;
+  }
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .command-bar {
+    width: calc(100% - 1.5rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-title {
+    display: none;
+  }
+  .tab {
+    font-size: 0.7rem;
+    padding-inline: 0.6rem;
+  }
+}
